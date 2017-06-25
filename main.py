@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, session, flash
+from flask import Flask, request, redirect, render_template
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -14,37 +14,29 @@ class Blog(db.Model):
     name = db.Column(db.String(120))
     body = db.Column(db.String(8000))
 
-    def __init__(self, name):
+    def __init__(self, name, body):
         self.name = name
-        self.completed = False
+        self.body = body
 
 
-@app.route('/', methods=['POST', 'GET'])
-def index():
+        
+@app.route('/blog', methods=['GET'])
+def display_entries():
+    entries = Blog.query.all()
+    return render_template('blog.html', title='Build a Blog', entries=entries)
 
+@app.route('/newpost', methods=['POST', 'GET'])
+def new_post():
     if request.method == 'POST':
-        task_name = request.form['task']
-        new_task = Task(task_name)
-        db.session.add(new_task)
+        entry_name = request.form['entry']
+        body_name = request.form['body']
+        new_post = Blog(entry_name, body_name)
+        db.session.add(new_post)
         db.session.commit()
+    else:
+        return render_template('newpost.html', title='Build a Blog')
 
-    tasks = Task.query.filter_by(completed=False).all()
-    completed_tasks = Task.query.filter_by(completed=True).all()
-    return render_template('todos.html',title="Get It Done!", 
-        tasks=tasks, completed_tasks=completed_tasks)
-
-
-@app.route('/delete-task', methods=['POST'])
-def delete_task():
-
-    task_id = int(request.form['task-id'])
-    task = Task.query.get(task_id)
-    task.completed = True
-    db.session.add(task)
-    db.session.commit()
-
-    return redirect('/')
-
+    return redirect ('/blog')
 
 if __name__ == '__main__':
     app.run()
