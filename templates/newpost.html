@@ -8,6 +8,9 @@
             <br>
             <input type="text" name='entry' />
         </label>
+        {% if error1 %}
+        <p class="error">{{error1}}</p>
+        {% endif %}
         <br>
         <br>
         <label>
@@ -16,6 +19,9 @@
             <textarea name='body' rows="20", cols="50">
             </textarea>
         </label>
+        {% if error2 %}
+        <p class="error">{{error2}}</p>
+        {% endif %}
         <br>
         <br>
         <input type="submit" value='Add Entry' />

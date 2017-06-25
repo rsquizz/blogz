@@ -27,9 +27,21 @@ def display_entries():
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
+    error = False
+    error1 = ""
+    error2 = ""
     if request.method == 'POST':
         entry_name = request.form['entry']
         body_name = request.form['body']
+        if entry_name.strip() == "":
+            error1 = "Please enter a title."
+            error = True
+        if body_name.strip() == "":
+            error2 = "Please enter a body."
+            error = True
+        if error == True:
+            return render_template('newpost.html', title='Build a Blog', error1=error1, error2=error2)
+        
         new_post = Blog(entry_name, body_name)
         db.session.add(new_post)
         db.session.commit()
