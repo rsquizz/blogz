@@ -18,12 +18,15 @@ class Blog(db.Model):
         self.name = name
         self.body = body
 
-
-        
 @app.route('/blog', methods=['GET'])
 def display_entries():
-    entries = Blog.query.all()
-    return render_template('blog.html', title='Build a Blog', entries=entries)
+    if request.args.get('id'):
+        id = request.args.get('id')
+        entry = Blog.query.filter_by(id=id).first()
+        return render_template('blog_post.html', title='Build a Blog', entry=entry)
+    else:
+        entries = Blog.query.all()
+        return render_template('blog.html', title='Build a Blog', entries=entries)
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
@@ -45,10 +48,12 @@ def new_post():
         new_post = Blog(entry_name, body_name)
         db.session.add(new_post)
         db.session.commit()
+        return render_template('blog_post.html', title='Build a Blog', entry=new_post)
+    
     else:
         return render_template('newpost.html', title='Build a Blog')
-
-    return redirect ('/blog')
+    
+    
 
 if __name__ == '__main__':
     app.run()

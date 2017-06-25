@@ -1,5 +1,3 @@
-<!--code from todos.html-->
-
 {% extends "base.html" %}
 
 {% block content %}
@@ -8,7 +6,7 @@
     {% else %}
         <ul>
             {% for entry in entries %}
-            <li><h2>{{entry.name}}</h2></li>
+            <li><a href='/blog?id={{entry.id}}'><h2>{{entry.name}}</h2></a></li>
             <p>{{entry.body}}</p>
             </li>
             {% endfor %}
