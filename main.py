@@ -25,7 +25,7 @@ def display_entries():
         entry = Blog.query.filter_by(id=id).first()
         return render_template('blog_post.html', title='Build a Blog', entry=entry)
     else:
-        entries = Blog.query.all()
+        entries = Blog.query.order_by(Blog.name.desc()).all()
         return render_template('blog.html', title='Build a Blog', entries=entries)
 
 @app.route('/newpost', methods=['POST', 'GET'])
