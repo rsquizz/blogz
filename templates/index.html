@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>All blogs hosted at Blogz</h1>
+{% for username in User.query.all()}
+{{ User.username }}
+{% endfor %}
+{% endblock %}
