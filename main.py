@@ -1,42 +1,15 @@
 import cgi
 from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from models import User, Blog
+from app import app, db
+from hashutils import check_pw_hash, make_pw_hash
 
-app = Flask(__name__)
-app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://blogz:developer@localhost:3306/blogz'
-app.config['SQLALCHEMY_ECHO'] = True
-db = SQLAlchemy(app)
-app.secret_key = 'y337kGcys&zP3B'
-
-class User(db.Model):
-    
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(30))
-    password = db.Column(db.String(30))
-    blogs = db.relationship('Blog', backref = 'owner')
-
-    def __init__(self, username, password):
-        self.username = username
-        self.password = password
-
-class Blog(db.Model):
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
-    body = db.Column(db.String(8000))
-    owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-
-    def __init__(self, name, body, owner_id):
-        self.name = name
-        self.body = body
-        self.owner_id = owner_id
-
-#@app.before_request
-#def require_login():
- #   allowed_routes = ['login', 'display_entries', 'index', 'add_user']
-  #  if request.endpoint not in allowed_routes and 'username' not in session:
-   #     return redirect('/login')
+@app.before_request
+def require_login():
+    allowed_routes = ['login', 'display_entries', 'index', 'add_user']
+    if request.endpoint not in allowed_routes and 'username' not in session:
+        return redirect('/login')
 
 @app.route('/', methods=['GET'])
 def index():
@@ -44,19 +17,23 @@ def index():
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
-    if request.method == 'POST':
+    if request.method == 'GET':
+        return render_template('login.html')
+    elif request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        if username and User.password == password:
-            session['username'] = username
-            flash("Logged in")
-            return redirect('/newpost')
-        elif User.password != password:
-            flash('Password incorrect')
-        else:
-            flash('User does not exist')
-
-    return render_template('login.html')
+        users = User.query.filter_by(username=username)
+        if users.count() == 1:
+            user = users.first()
+            if check_pw_hash(password, user.pw_hash):
+                session['username'] = user.username
+                flash("Logged in")
+                return redirect('/newpost')
+            elif user.pw_hash != check_pw_hash(password, user.pw_hash):
+                flash('Password incorrect')
+            else:
+                flash('User does not exist')
+        return redirect('/login')
 
 @app.route('/blog', methods=['GET'])
 def display_entries():
@@ -93,15 +70,14 @@ def new_post():
         new_url = ('/blog?id=' + new_id)
         return redirect(new_url)
     
-    else:
-        return render_template('newpost.html', title='Blogz')
+    return render_template('newpost.html', title='Blogz')
 
 @app.route('/signup', methods=['POST', 'GET'])
 def add_user():
     if request.method == 'POST':
-        new_user = request.form['username']
-        new_password = request.form['password']
-        pw_verify = request.form['verify']
+        new_user = cgi.escape(request.form['username'], quote=True)
+        new_password = cgi.escape(request.form['password'], quote=True)
+        pw_verify = cgi.escape(request.form['verify'], quote=True)
         existing_user = User.query.filter_by(username=new_user).first()
         invalid_user = None
         invalid_pw = None
@@ -113,27 +89,26 @@ def add_user():
         if (not new_user or new_user.strip() == "") or (not new_password or new_password.strip() == "") or (not pw_verify or pw_verify.strip() == ""):
             blank_field = "One or more fields is empty"
             errors = True
-
         if existing_user:
             duplicate_user = "Username already exists"
             new_user = ""
             errors = True
-
         if (not new_user) or (new_user.strip() == "") or (len(new_user) < 3) or (len(new_user) > 30) or (" " in new_user):
             invalid_user = "Please enter a valid username. Your username must be at least 3 and no longer than 30 characters and may not contain spaces."
             new_user = ""
             errors = True
-
         if (not new_password) or (new_password.strip() == "") or (len(new_password) < 3) or (len(new_password) > 30) or (" " in new_password):
             invalid_pw= "Please enter a password. Your password must be at least 3 and no longer than 30 characters and may not contain spaces."
             errors = True
-
         if (not pw_verify) or (pw_verify.strip() == "") or (new_password) != (pw_verify):
             pw_mismatch = "Please confirm your password."
             errors = True
 
         if (errors == False):
-            new_user = cgi.escape(new_user, quote=True)
+            user = User(username=new_user, pw_hash=new_password)
+            db.session.add(user)
+            db.session.commit()
+            session['username'] = user.username
             return redirect('/newpost')
     
         else:
