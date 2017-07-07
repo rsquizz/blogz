@@ -5,6 +5,9 @@ from models import User, Blog
 from app import app, db
 from hashutils import check_pw_hash, make_pw_hash
 
+def get_blog_entries(current_user_id):
+    return Blog.query.filter_by(owner_id=current_user_id).all()
+
 @app.before_request
 def require_login():
     allowed_routes = ['login', 'display_entries', 'index', 'add_user']
@@ -16,6 +19,10 @@ def index():
     bloglist = User.query.filter_by(username=User.username).first()
     bloglist = bloglist.username
     return render_template('index.html', bloglist=bloglist)
+
+def logged_in_user():
+    owner = User.query.filter_by(username=session['username']).first()
+    return owner
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
@@ -45,7 +52,7 @@ def display_entries():
         return render_template('blog_post.html', title='Build a Blog', entry=entry)
     else:
         entries = Blog.query.order_by(Blog.name.desc()).all()
-        return render_template('blog.html', title='Build a Blog', entries=entries)
+        return render_template('blog.html', title='Build a Blog', entries=get_blog_entries(logged_in_user().id))
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
