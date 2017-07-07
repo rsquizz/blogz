@@ -3,7 +3,7 @@ from flask import Flask, request, redirect, render_template, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from models import User, Blog
 from app import app, db
-from hashutils import check_pw_hash, make_pw_hash
+from hashutils import check_pw_hash, make_pw_hash, make_salt
 
 def get_blog_entries(current_user_id):
     return Blog.query.filter_by(owner_id=current_user_id).all()
@@ -16,8 +16,7 @@ def require_login():
 
 @app.route('/', methods=['GET'])
 def index():
-    bloglist = User.query.filter_by(username=User.username).first()
-    bloglist = bloglist.username
+    bloglist = User.query.filter_by(username=User.username).all()
     return render_template('index.html', bloglist=bloglist)
 
 def logged_in_user():
@@ -35,7 +34,7 @@ def login():
         if users.count() == 1:
             user = users.first()
             if check_pw_hash(password, user.pw_hash):
-                session['username'] = user.username
+                session['username'] = user
                 flash("Logged in")
                 return redirect('/newpost')
             elif user.pw_hash != check_pw_hash(password, user.pw_hash):
@@ -52,7 +51,7 @@ def display_entries():
         return render_template('blog_post.html', title='Build a Blog', entry=entry)
     else:
         entries = Blog.query.order_by(Blog.name.desc()).all()
-        return render_template('blog.html', title='Build a Blog', entries=get_blog_entries(logged_in_user().id))
+        return render_template('blog.html', title='Build a Blog', entries=entries)
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
@@ -102,7 +101,7 @@ def add_user():
             duplicate_user = "Username already exists"
             new_user = ""
             errors = True
-        if (not new_user) or (new_user.strip() == "") or (len(new_user) < 3) or (len(new_user) > 30) or (" " in new_user):
+        if (len(new_user) < 3) or (len(new_user) > 30) or (" " in new_user):
             invalid_user = "Please enter a valid username. Your username must be at least 3 and no longer than 30 characters and may not contain spaces."
             new_user = ""
             errors = True
@@ -117,7 +116,7 @@ def add_user():
             user = User(username=new_user, pw_hash=new_password)
             db.session.add(user)
             db.session.commit()
-            session['username'] = user.username
+            session['username'] = new_user
             return redirect('/newpost')
     
         else:

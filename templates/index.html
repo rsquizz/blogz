@@ -2,5 +2,8 @@
 
 {% block content %}
 <h1>All blogs hosted at Blogz</h1>
-{{ bloglist }}
+{% for user in bloglist: %}
+<a href= "/blog?user={{user.username}}">{{ user.username }}</a>
+<br><br>
+{% endfor %}
 {% endblock %}
