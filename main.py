@@ -38,7 +38,7 @@ def login():
             session['username'] = username
             flash("Logged in")
             return redirect('/newpost')
-        elif user.pw_hash != check_pw_hash(password, user.pw_hash):
+        elif user and user.pw_hash != check_pw_hash(password, user.pw_hash):
             flash('Password incorrect')
             return render_template('login.html')
         else:
@@ -130,7 +130,7 @@ def add_user():
 @app.route('/logout')
 def logout():
     del session['username']
-    return redirect('/blog')
+    return redirect('/')
 
 if __name__ == '__main__':
     app.run()

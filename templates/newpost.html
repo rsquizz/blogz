@@ -2,6 +2,15 @@
 
 {% block content %}
 <h1>Add a Blog Entry</h1>
+{% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul class=flashes>
+        {% for message in messages %}
+            <li>{{ message }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
     <form method='post'>
         <label>
             Title for your new post:
