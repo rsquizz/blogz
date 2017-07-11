@@ -27,21 +27,24 @@ def logged_in_user():
 def login():
     if request.method == 'GET':
         return render_template('login.html')
-    elif request.method == 'POST':
+    else:
         username = request.form['username']
         password = request.form['password']
         users = User.query.filter_by(username=username)
-        if users.count() == 1:
-            user = users.first()
-            if check_pw_hash(password, user.pw_hash):
-                session['username'] = user
-                flash("Logged in")
-                return redirect('/newpost')
-            elif user.pw_hash != check_pw_hash(password, user.pw_hash):
-                flash('Password incorrect')
-            else:
-                flash('User does not exist')
-        return redirect('/login')
+        #if users.count() == 1:
+        #   return render_template('login.html')
+        user = users.first()
+        if user and check_pw_hash(password, user.pw_hash):
+            session['username'] = username
+            flash("Logged in")
+            return redirect('/newpost')
+        elif user.pw_hash != check_pw_hash(password, user.pw_hash):
+            flash('Password incorrect')
+            return render_template('login.html')
+        else:
+            flash('User does not exist')
+            return render_template('login.html')
+    return render_template('index.html')
 
 @app.route('/blog', methods=['GET'])
 def display_entries():

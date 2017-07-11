@@ -3,8 +3,8 @@ from hashutils import make_pw_hash, make_salt
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(30))
-    pw_hash = db.Column(db.String(30))
+    username = db.Column(db.String(200))
+    pw_hash = db.Column(db.String(200))
     blogs = db.relationship('Blog', backref = 'owner')
 
     def __init__(self, username, pw_hash):
@@ -14,7 +14,7 @@ class User(db.Model):
 class Blog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120))
+    name = db.Column(db.String(200))
     body = db.Column(db.String(8000))
     owner_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
