@@ -48,23 +48,34 @@ def login():
 
 @app.route('/blog', methods=['GET'])
 def display_entries():
-    if request.args.get('id'):
-        id = request.args.get('id')
-        entry = Blog.query.filter_by(id=id).first()
-        return render_template('blog_post.html', title='Build a Blog', entry=entry)
-    else:
-        entries = Blog.query.order_by(Blog.name.desc()).all()
-        return render_template('blog.html', title='Build a Blog', entries=entries)
+        if request.args.get('user'):
+            user_name = request.args.get('user')
+            owner = User.query.filter_by(username=user_name).first()
+            owner_id = owner.id
+            entries = Blog.query.filter_by(owner_id=owner_id).all()
+            return render_template('blog.html', title='Build a Blog', entries=entries)
+        elif request.args.get('id'):
+            id = request.args.get('id')
+            entry = Blog.query.filter_by(id=id).first()
+            owner_id = entry.owner_id
+            author = User.query.filter_by(id=owner_id).first()
+            return render_template('blog_post.html', title='Build a Blog', entry=entry, author=author)
+        else:
+            entries = Blog.query.order_by(Blog.name.desc()).all()
+            return render_template('blog.html', title='Build a Blog', entries=entries)
 
 @app.route('/newpost', methods=['POST', 'GET'])
 def new_post():
     error = False
     error1 = ""
     error2 = ""
+    
     if request.method == 'POST':
         entry_name = request.form['entry']
         body_name = request.form['body']
-        owner_id = Blog.owner_id
+        #**PROBLEM IS HERE - OWNER ID NOT BEING WRITTEN TO DATABASE**
+        owner_id = User.query.filter_by(username=session['username']).first()
+        owner_id = owner_id.id
         if entry_name.strip() == "":
             error1 = "Please enter a title."
             error = True

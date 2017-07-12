@@ -3,6 +3,7 @@
 {% block content %}
 
 <h2>{{entry.name}}</h2>
+<li>Written by <a href='/blog?user={{author.username}}'>{{author.username}}</a></li>
 <p>{{entry.body}}</p>
 
 {% endblock %}
